@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		{7D5492A9-D3CF-4123-9193-9F8B5E3920F9} = s 'CTNG'
+		'CTNG.EXE'
+		{
+			val AppID = s {7D5492A9-D3CF-4123-9193-9F8B5E3920F9}
+		}
+	}
+}

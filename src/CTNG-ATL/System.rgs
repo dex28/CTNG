@@ -1,0 +1,24 @@
+HKCR
+{
+	CTNG.System.1 = s 'CTNG System Class'
+	{
+		CLSID = s '{B63AC033-0B40-4FD1-9BE1-5276FED1A5A1}'
+	}
+	CTNG.System = s 'CTNG System Class'
+	{
+		CLSID = s '{B63AC033-0B40-4FD1-9BE1-5276FED1A5A1}'
+		CurVer = s 'CTNG.System.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {B63AC033-0B40-4FD1-9BE1-5276FED1A5A1} = s 'CTNG System Class'
+		{
+			ProgID = s 'CTNG.System.1'
+			VersionIndependentProgID = s 'CTNG.System'
+			ForceRemove 'Programmable'
+			LocalServer32 = s '%MODULE%'
+			val AppID = s '{7D5492A9-D3CF-4123-9193-9F8B5E3920F9}'
+			'TypeLib' = s '{3FFC9007-8F41-48F9-BE6F-D83A79BAA74A}'
+		}
+	}
+}

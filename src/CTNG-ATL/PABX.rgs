@@ -1,0 +1,24 @@
+HKCR
+{
+	CTNG.PABX.1 = s 'CTNG PABX Class'
+	{
+		CLSID = s '{155E8B8C-6C03-470E-82F7-16F99C417A5F}'
+	}
+	CTNG.PABX = s 'CTNG PABX Class'
+	{
+		CLSID = s '{155E8B8C-6C03-470E-82F7-16F99C417A5F}'
+		CurVer = s 'CTNG.PABX.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {155E8B8C-6C03-470E-82F7-16F99C417A5F} = s 'CTNG PABX Class'
+		{
+			ProgID = s 'CTNG.PABX.1'
+			VersionIndependentProgID = s 'CTNG.PABX'
+			ForceRemove 'Programmable'
+			LocalServer32 = s '%MODULE%'
+			val AppID = s '{7D5492A9-D3CF-4123-9193-9F8B5E3920F9}'
+			'TypeLib' = s '{3FFC9007-8F41-48F9-BE6F-D83A79BAA74A}'
+		}
+	}
+}

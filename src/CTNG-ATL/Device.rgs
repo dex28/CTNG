@@ -1,0 +1,24 @@
+HKCR
+{
+	CTNG.Device.1 = s 'CTNG Device Class'
+	{
+		CLSID = s '{2BE420EA-C378-40F8-BF73-B19CFF854186}'
+	}
+	CTNG.Device = s 'CTNG Device Class'
+	{
+		CLSID = s '{2BE420EA-C378-40F8-BF73-B19CFF854186}'
+		CurVer = s 'CTNG.Device.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {2BE420EA-C378-40F8-BF73-B19CFF854186} = s 'CTNG Device Class'
+		{
+			ProgID = s 'CTNG.Device.1'
+			VersionIndependentProgID = s 'CTNG.Device'
+			ForceRemove 'Programmable'
+			LocalServer32 = s '%MODULE%'
+			val AppID = s '{7D5492A9-D3CF-4123-9193-9F8B5E3920F9}'
+			'TypeLib' = s '{3FFC9007-8F41-48F9-BE6F-D83A79BAA74A}'
+		}
+	}
+}

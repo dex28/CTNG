@@ -1,0 +1,243 @@
+/*
+    Project: CTNG COM ATL
+
+    Module: CTNG.idl
+
+    Description: IDL source for CTNG Type Library
+
+    Copyright (c) 2002 By Mikica B Kocic
+    Copyright (c) 2002 By IPTC Technology Communication AB
+*/
+
+// This file will be processed by the MIDL tool to
+// produce the type library (CTNG.tlb) and marshalling code.
+
+//import "oaidl.idl";
+//import "ocidl.idl";
+//#include "olectl.h"
+    
+[
+    uuid(3FFC9007-8F41-48F9-BE6F-D83A79BAA74A),
+    version(1.1),
+    helpstring("CTNG 1.1 Type Library")
+]
+library CTNGLib
+{
+    importlib("stdole32.tlb");
+    importlib("stdole2.tlb");
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Enumerated types
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Refer to already defined enums, and keep multiple-include protection macro.
+
+    cpp_quote("#ifndef _CSTA_ENUM_TYPES_H_INCLUDED")
+    #include "../CSTA Lib/CSTA-EnumTypes.h"
+    cpp_quote("#endif // _CSTA_ENUM_TYPES_H_INCLUDED")
+
+    typedef enum ErrorClass ErrorClass;
+    typedef enum ErrorCode ErrorCode;
+    typedef enum SystemStatusType SystemStatusType;
+    typedef enum EventCauseType EventCauseType;
+    typedef enum LocalConnectionStateType LocalConnectionStateType;
+    typedef enum FeatureInfoType FeatureInfoType;
+    typedef enum QueryDeviceFeatureType QueryDeviceFeatureType;
+    typedef enum ForwardingType ForwardingType;
+    typedef enum DeviceClassType DeviceClassType;
+    typedef enum DeviceTypeType DeviceTypeType;
+    typedef enum AgentStateType AgentStateType;
+    typedef enum AgentParameterType AgentParameterType;
+
+    typedef struct STAT_COUNTERS
+    {
+        long countOfEstablished;
+        long countOfConnectionCleared;
+        long countOfOutOfService;
+        long countOfBackInService;
+        } STAT_COUNTERS;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // CTNG.System class
+    ///////////////////////////////////////////////////////////////////////////
+
+    [
+        object,
+        uuid(74041709-2558-4C76-9614-63FF8E5E5452),
+        dual,
+        helpstring("ISystem Interface"),
+        pointer_default(unique)
+    ]
+    interface ISystem : IDispatch
+    {
+        [id(1), helpstring("method OpenConsole")] HRESULT OpenConsole();
+        [id(2), helpstring("method CloseConsole")] HRESULT CloseConsole();
+        [id(3), helpstring("method HasConsole")] HRESULT HasConsole( [out,retval] BOOL* pResult );
+        [id(4), helpstring("method AddPABX")] HRESULT AddPABX([in] BSTR pabxId, [in] BSTR ip_address, [in] long tcp_port);
+        [id(5), helpstring("method Dump")] HRESULT Dump();
+        [id(6), helpstring("method Sleep")] HRESULT Sleep([in] long milliseconds);
+        [id(7), helpstring("method VerboseErrorCategory")] HRESULT VerboseErrorCategory([in] ErrorCode rc, [out,retval] BSTR* pVal );
+        [id(8), helpstring("method VerboseErrorCode")] HRESULT VerboseErrorCode([in] ErrorCode rc, [out,retval] BSTR* pVal );
+        [id(9), helpstring("method VerboseSystemStatus")] HRESULT VerboseSystemStatus([in] SystemStatusType ss, [out,retval] BSTR* pVal );
+        [id(10), helpstring("method VerboseEventCause")] HRESULT VerboseEventCause([in] EventCauseType ec, [out,retval] BSTR* pVal );
+        [id(11), helpstring("method VerboseLocalConnectionState")] HRESULT VerboseLocalConnectionState([in] LocalConnectionStateType lcs, [out,retval] BSTR* pVal );
+        [id(12), helpstring("method GetCounters")] HRESULT GetCounters([out] STAT_COUNTERS* sysCounters );
+    };
+
+    [
+        uuid(F5FC4EFE-74B6-48D5-B48C-AE162F6B1A0B),
+        helpstring("_ISystemEvents Interface")
+    ]
+    dispinterface _ISystemEvents
+    {
+        properties:
+        methods:
+    };
+
+    [
+        uuid(B63AC033-0B40-4FD1-9BE1-5276FED1A5A1),
+        helpstring("CTNG System Class")
+    ]
+    coclass System
+    {
+        [default] interface ISystem;
+        [default, source] dispinterface _ISystemEvents;
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // CTNG.PABX class
+    ///////////////////////////////////////////////////////////////////////////
+
+    [
+        object,
+        uuid(AE0C8561-63DD-4C52-9023-A0CCBC9EE3B3),
+        dual,
+        helpstring("IPABX Interface"),
+        pointer_default(unique)
+    ]
+    interface IPABX : IDispatch
+    {
+        [id(1), helpstring("method Open")] HRESULT Open([in] BSTR id);
+        [id(2), helpstring("method Close")] HRESULT Close();
+        [propget, id(3), helpstring("property ID")] HRESULT ID([out, retval] BSTR *pVal);
+        [propput, id(3), helpstring("property ID")] HRESULT ID([in] BSTR newVal);
+    };
+
+    [
+        uuid(35588776-0A0A-4731-9C59-FD30740D6C60),
+        helpstring("_IPABXEvents Interface")
+    ]
+    dispinterface _IPABXEvents
+    {
+        properties:
+        methods:
+        [id(1), helpstring("method OnSystemStatus")] void OnSystemStatus([in] SystemStatusType status);
+    };
+
+    [
+        uuid(155E8B8C-6C03-470E-82F7-16F99C417A5F),
+        helpstring("CTNG PABX Class")
+    ]
+    coclass PABX
+    {
+        [default] interface IPABX;
+        [default, source] dispinterface _IPABXEvents;
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // CTNG.Device class
+    ///////////////////////////////////////////////////////////////////////////
+
+    [
+        object,
+        uuid(C391A2ED-B56A-469E-B0E3-F51D8BE88713),
+        dual,
+        helpstring("IDevice Interface"),
+        pointer_default(unique)
+    ]
+    interface IDevice : IDispatch
+    {
+        [id(1), helpstring("method Open")] HRESULT Open([in] BSTR pabxID, [in] BSTR deviceID, [out,retval] ErrorCode* errCode );
+        [id(2), helpstring("method Close")] HRESULT Close([out,retval] ErrorCode* errCode );
+        [id(3), helpstring("method TestFireAllEvents")] HRESULT TestFireAllEvents();
+        [id(4), helpstring("method PutExtension")] HRESULT PutExtension( [in] VARIANT* outOID, [in] VARIANT* outData );
+        [id(5), helpstring("method GetExtension")] HRESULT GetExtension( [out] SAFEARRAY(byte)* inOID, [out] SAFEARRAY(byte)* inData );
+        [id(6), helpstring("method AlternateCall")] HRESULT AlternateCall([in] BSTR heldCall, [in] BSTR activeCall, [out,retval] ErrorCode* errCode );
+        [id(7), helpstring("method AnswerCall")] HRESULT AnswerCall([in] BSTR connectionId, [out,retval] ErrorCode* errCode );
+        [id(8), helpstring("method CallCompletion")] HRESULT CallCompletion([in] BSTR connectionId, [in] FeatureInfoType feature, [out,retval] ErrorCode* errCode );
+        [id(9), helpstring("method ClearCall")] HRESULT ClearCall([in] BSTR callToBeCleared, [out,retval] ErrorCode* errCode );
+        [id(10), helpstring("method ClearConnection")] HRESULT ClearConnection([in] BSTR connectionId, [out,retval] ErrorCode* errCode );
+        [id(11), helpstring("method ConferenceCall")] HRESULT ConferenceCall([in] BSTR heldCall, [in] BSTR activeCall, [out] VARIANT* connectionId, [out,retval] ErrorCode* errCode );
+        [id(12), helpstring("method ConsultationCall")] HRESULT ConsultationCall([in] BSTR existingCall, [in] BSTR calledDirectoryNumber, [out] VARIANT* initiatedConnectionId, [out,retval] ErrorCode* errCode );
+        [id(13), helpstring("method DivertCall_Deflect")] HRESULT DivertCall_Deflect([in] BSTR connectionId, [in] BSTR newDestination, [out,retval] ErrorCode* errCode );
+        [id(14), helpstring("method DivertCall_DirectedPickup")] HRESULT DivertCall_DirectedPickup([in] BSTR connectionId, [in] BSTR requestingDevice, [out,retval] ErrorCode* errCode );
+        [id(15), helpstring("method DivertCall_GroupPickup")] HRESULT DivertCall_GroupPickup([in] BSTR groupDevice, [out,retval] ErrorCode* errCode );
+        [id(16), helpstring("method HoldCall")] HRESULT HoldCall([in] BSTR connectionId, [in] BOOL reserveConnection, [out,retval] ErrorCode* errCode );
+        [id(17), helpstring("method MakeCall")] HRESULT MakeCall([in] BSTR calledDirectoryNumber, [out] VARIANT* connectionId, [out,retval] ErrorCode* errCode );
+        [id(18), helpstring("method MakePredictiveCall")] HRESULT MakePredictiveCall([in] BSTR calledDirectoryNumber, [out] VARIANT* connectionId, [out,retval] ErrorCode* errCode );
+        [id(19), helpstring("method ReconnectCall")] HRESULT ReconnectCall([in] BSTR heldCall, [in] BSTR activeCall, [out,retval] ErrorCode* errCode );
+        [id(20), helpstring("method RetrieveCall")] HRESULT RetrieveCall([in] BSTR connectionId, [out,retval] ErrorCode* errCode );
+        [id(21), helpstring("method TransferCall")] HRESULT TransferCall([in] BSTR heldCall, [in] BSTR activeCall, [out] VARIANT* connectionId, [out,retval] ErrorCode* errCode );
+        [id(22), helpstring("method SystemStatus")] HRESULT SystemStatus([in] SystemStatusType status, [out,retval] ErrorCode* errCode);
+        [id(23), helpstring("method EscapeService")] HRESULT EscapeService( [in] VARIANT* outOID, [in] VARIANT* outData, [out] SAFEARRAY(byte)* inOID, [out] SAFEARRAY(byte)* inData, [out,retval] ErrorCode* errCode);
+        [id(24), helpstring("method QueryDevice_MessageWaiting")] HRESULT QueryDevice_MessageWaiting( [out] BOOL* indicator, [out,retval] ErrorCode* errCode );
+        [id(25), helpstring("method QueryDevice_DoNotDisturb")] HRESULT QueryDevice_DoNotDisturb( [out] BOOL* indicator, [out,retval] ErrorCode* errCode );
+        [id(26), helpstring("method QueryDevice_Forward")] HRESULT QueryDevice_Forward( [out] VARIANT* forwardInfo, [out,retval] ErrorCode* errCode );
+        [id(27), helpstring("method QueryDevice_DeviceInfo")] HRESULT QueryDevice_DeviceInfo( [out] DeviceClassType* devClass, [out] DeviceTypeType* devType, [out,retval] ErrorCode* errCode );
+        [id(28), helpstring("method QueryDevice_AgentState")] HRESULT QueryDevice_AgentState( [out] AgentStateType* agentState, [out,retval] ErrorCode* errCode );
+        [id(29), helpstring("method SetFeature_MessageWaiting")] HRESULT SetFature_MessageWaiting( [in] BOOL indicator, [out,retval] ErrorCode* errCode );
+        [id(30), helpstring("method SetFeature_DoNotDisturb")] HRESULT SetFature_DoNotDisturb([in] BOOL indicator, [out,retval] ErrorCode* errCode );
+        [id(31), helpstring("method SetFeature_Forward")] HRESULT SetFature_Forward( [in] ForwardingType forwadType, [in] BSTR forwardDN, [out,retval] ErrorCode* errCode );
+        [id(32), helpstring("method SetFeature_RequestAgentState")] HRESULT SetFature_RequestAgentState( [in] AgentParameterType state, [in] BSTR agentID, [in] BSTR agentGroup, [in] BSTR agentPassword, [out,retval] ErrorCode* errCode );
+		[id(33), helpstring("method WaitOpen")] HRESULT WaitOpen( double timeoutSeconds, [out,retval] ErrorCode* errCode );
+    };
+
+    [
+        uuid(DF33386D-07F2-40F2-8775-E136A4DFEFB0),
+        helpstring("_IDeviceEvents Interface")
+    ]
+    dispinterface _IDeviceEvents
+    {
+        properties:
+        methods:
+        [id(1), helpstring("method OnCallCleared")] void OnCallCleared([in] BSTR clearedCall, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(2), helpstring("method OnConferenced")] void OnConferenced([in] BSTR primaryOldCall, [in] BSTR secondaryOldCall, [in] BSTR confController, [in] BSTR addedParty, [in] BSTR conferenceConnections, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(3), helpstring("method OnConnectionCleared")] void OnConnectionCleared([in] BSTR droppedConnection, [in] BSTR releasingDevice, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(4), helpstring("method OnDelivered")] void OnDelivered([in] BSTR connection, [in] BSTR alertingDevice, [in] BSTR callingDevice, [in] BSTR calledDevice, [in] BSTR lastRedirectionDevice, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(5), helpstring("method OnDiverted")] void OnDiverted([in] BSTR connection, [in] BSTR divertingDevice, [in] BSTR newDestination, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(6), helpstring("method OnEstablished")] void OnEstablished([in] BSTR establishedConnection, [in] BSTR answeredDevice, [in] BSTR callingDevice, [in] BSTR calledDevice, [in] BSTR lastRedirectionDevice, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(7), helpstring("method OnFailed")] void OnFailed([in] BSTR failedConnection, [in] BSTR failingDevice, [in] BSTR calledDevice, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(8), helpstring("method OnHeld")] void OnHeld([in] BSTR heldConnection, [in] BSTR holdingDevice, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(9), helpstring("method OnNetworkReached")] void OnNetworkReached([in] BSTR connection, [in] BSTR trunkUsed, [in] BSTR calledDevice, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(10), helpstring("method OnOriginated")] void OnOriginated([in] BSTR originatingConnection, [in] BSTR callingDevice, [in] BSTR calledDevice, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(11), helpstring("method OnQueued")] void OnQueued([in] BSTR queuedConnection, [in] BSTR queue, [in] BSTR callingDevice, [in] BSTR calledDevice, [in] BSTR lastRedirectionDevice, [in] long numberedQueued, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(12), helpstring("method OnRetrieved")] void OnRetrieved([in] BSTR retrievedConnection, [in] BSTR retrievingDevice, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(13), helpstring("method OnServiceInitiated")] void OnServiceInitiated([in] BSTR initiatedConnection, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(14), helpstring("method OnTransferred")] void OnTransferred([in] BSTR primaryOldCall, [in] BSTR secondaryOldCall, [in] BSTR transferringDevice, [in] BSTR transferredDevice, [in] BSTR transferredConnections, [in] LocalConnectionStateType localConnectionInfo, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(15), helpstring("method OnOutOfService")] void OnOutOfService([in] BSTR device, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(16), helpstring("method OnBackInService")] void OnBackInService([in] BSTR device, [in] EventCauseType cause, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(17), helpstring("method OnSystemStatus")] void OnSystemStatus([in] SystemStatusType status, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(18), helpstring("method OnLoggedOn")] void OnLoggedOn([in] BSTR agentDevice, [in] BSTR agentID, [in] BSTR agentGroup, [in] BSTR agentPassword, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(19), helpstring("method OnLoggedOff")] void OnLoggedOff([in] BSTR agentDevice, [in] BSTR agentID, [in] BSTR agentGroup, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(20), helpstring("method OnNotReady")] void OnNotReady([in] BSTR agentDevice, [in] BSTR agentID, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(21), helpstring("method OnReady")] void OnReady([in] BSTR agentDevice, [in] BSTR agentID, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(22), helpstring("method OnWorkNotReady")] void OnWorkNotReady([in] BSTR agentDevice, [in] BSTR agentID, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(23), helpstring("method OnWorkReady")] void OnWorkReady([in] BSTR agentDevice, [in] BSTR agentID, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(24), helpstring("method OnCallInformation")] void OnCallInformation([in] BSTR connection, [in] BSTR device, [in] BSTR accountInfo, [in] BSTR authorisationCode, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(25), helpstring("method OnDoNotDisturb")] void OnDoNotDisturb([in] BSTR device, [in] BOOL doNotDisturbFlag, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(26), helpstring("method OnForwarding")] void OnForwarding([in] BSTR device, [in] ForwardingType type, [in] BSTR forwardDN, [in] BSTR forwardedTo, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(27), helpstring("method OnMessageWaiting")] void OnMessageWaiting([in] BSTR deviceForMessage, [in] BSTR invokingDevice, [in] BOOL messageWaitingFlag, [in] SAFEARRAY(byte)* manufacturerOID, [in] SAFEARRAY(byte)* privateData );
+        [id(28), helpstring("method OnPrivateEvent")] void OnPrivateEvent([in] SAFEARRAY(byte)* data);
+        [id(29), helpstring("method OnMonitorStarted")] void OnMonitorStarted( [in] ErrorCode errCode );
+    };
+
+    [
+        uuid(2BE420EA-C378-40F8-BF73-B19CFF854186),
+        helpstring("CTNG Device Class")
+    ]
+    coclass Device
+    {
+        [default] interface IDevice;
+        [default, source] dispinterface _IDeviceEvents;
+    };
+};

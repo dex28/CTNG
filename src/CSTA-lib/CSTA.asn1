@@ -1,0 +1,2343 @@
+--
+--  Project: CSTALib
+--
+--  Module: CSTA.asn1
+--
+--  Description: CSTA Phase I ASN.1 Specification
+--
+--  Copyright (c) 2002 By Mikica B Kocic
+--  Copyright (c) 2002 By IPTC Technology Communication AB
+--
+--  2001-08-29
+--
+
+CSTA DEFINITIONS ::=
+BEGIN
+
+------------------------------------------------------------------------------
+-- ROSE implementation for CSTA
+------------------------------------------------------------------------------
+-- This ASN.1 has been derived from ITU-T X.219 and X.229.
+--
+-- References:
+--
+-- ITU-T X.208: Specification of Abstract Syntax Notation One (ASN.1)
+-- ITU-T X.209: Specification of Basic Encoding Rules for Abstract Syntax Notation One (ASN.1) 
+--
+-- ITU-T X.219: Remote Operations: Model, Notation and Service Definition 
+-- ITU-T X.229: Remote Operations: Protocol Specification
+--
+------------------------------------------------------------------------------
+
+ROSEapdu
+::= CHOICE
+  {
+    invokeApdu        [1] IMPLICIT ROIVapdu,
+    resultApdu        [2] IMPLICIT RORSapdu,
+    errorApdu         [3] IMPLICIT ROERapdu,
+    rejectApdu        [4] IMPLICIT RORJapdu
+  }
+
+-- APDU types
+
+InvokeIDType
+::= INTEGER
+
+InvokedIDType
+::= INTEGER
+
+ROIVapdu
+::= SEQUENCE
+  {
+    invokeID         InvokeIDType,
+    linkedID         [0] IMPLICIT InvokedIDType OPTIONAL,
+    operationValue   OperationIDType, -- OPERATION,
+    argument         ANY DEFINED BY operationValue OPTIONAL
+                     -- ANY is filled by the single ASN.1 data
+                     -- type following the key word ARGUMENT in the type
+                     -- definition of a particular operation.
+  }
+
+RORSapdu
+::= SEQUENCE
+  {
+    invokeID         InvokeIDType,
+    SEQUENCE
+      {
+        operationValue   OperationIDType, -- OPERATION,
+        result           ANY DEFINED BY operationValue OPTIONAL
+                         -- ANY is filled by the single ASN.1 data type
+                         -- following the key word RESULT in the type
+                         -- definition of a particular operation.
+      } OPTIONAL
+  }
+
+ROERapdu
+::= SEQUENCE
+  {
+    invokedID        InvokedIDType,
+    errorValue       ErrorIDType, -- ERROR,
+    parameter        ANY DEFINED BY errorValue OPTIONAL
+                     -- ANY is filled by the single ASN. 1 data type following
+                     -- the key word PARAMETER in the type definition
+                     -- of a particular operation.
+  }
+
+RORJapdu
+::= SEQUENCE
+  {
+    invokeID CHOICE
+      {
+        InvokeIDType,
+        NULL
+      },
+    problem CHOICE
+      {
+        [0] IMPLICIT GeneralProblem,
+        [1] IMPLICIT InvokeProblem,
+        [2] IMPLICIT ReturnResultProblem,
+        [3] IMPLICIT ReturnErrorProblem
+      }
+  }
+
+GeneralProblem
+::= INTEGER
+  {
+    unrecognisedAPDU          (0),
+    mistypedAPDU              (1),
+    badlyStructuredAPDU       (2)
+  }
+
+InvokeProblem
+::= INTEGER
+  {
+    duplicateInvocation       (0),
+    unrecognisedOperation     (1),
+    mistypedArgument          (2),
+    resourceLimitation        (3),
+    initiatorReleasing        (4),
+    unrecognisedLinkedID      (5),
+    linkedResponseUnexpected  (6),
+    unexpectedChildOperation  (7)
+  }
+
+ReturnResultProblem
+::= INTEGER
+  {
+    unrecognisedInvocation    (0),
+    resultResponseUnexpected  (1),
+    mistypedResult            (2)
+  }
+
+ReturnErrorProblem
+::= INTEGER
+  {
+    unrecognisedInvocation    (0),
+    errorResponseUnexpected   (1),
+    unrecognisedError         (2),
+    unexpectedError           (3),
+    mistypedParameter         (4)
+  }
+
+
+------------------------------------------------------------------------------
+-- CSTA Phase I definition itself
+------------------------------------------------------------------------------
+-- This ASN.1 has been derived from ECMA-180.
+--
+-- References:
+--
+-- ECMA-179: Services for Computer Supported Telecommunications Applications (CSTA) Phase I
+-- ECMA-180: Protocol for Computer Supported Telecommunications Applications (CSTA) Phase I
+--
+-- ECMA-217: Services for Computer Supported Telecommunications Applications (CSTA) Phase II
+-- ECMA-219: Protocol for Computer Supported Telecommunications Applications (CSTA) Phase II
+--
+-- ECMA-269: Services for Computer Supported Telecommunications Applications (CSTA) Phase III
+-- ECMA-285: Protocol for Computer Supported Telecommunications Applications (CSTA) Phase III
+--
+-- ITU-T X.208: Specification of Abstract Syntax Notation One (ASN.1)
+-- ITU-T X.209: Specification of Basic Encoding Rules for Abstract Syntax Notation One (ASN.1) 
+--
+-- ITU-T X.219: Remote Operations: Model, Notation and Service Definition 
+-- ITU-T X.229: Remote Operations: Protocol Specification
+-- 
+------------------------------------------------------------------------------
+
+CSTAapdu 
+::= ROSEapdu
+
+------------------------------------------------------------------------------
+-- Chapter 9 Switching function services
+------------------------------------------------------------------------------
+-- Chapter 9.1 Alternate call
+-- CSTA-alternate-call DEFINITIONS
+------------------------------------------------------------------------------
+
+alternateCall OPERATION
+    ARGUMENT      AlternateCallArgument
+    RESULT        AlternateCallResult
+    ERRORS        {universalFailure}
+::= 1
+
+AlternateCallArgument
+::= CHOICE
+  {
+    callsInvolved      ConnectionDetails,
+    SEQUENCE
+      {
+        callsInvolved  ConnectionDetails,
+        extensions     CSTACommonArguments OPTIONAL
+      }
+  }
+
+AlternateCallResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.2 Answer call
+-- CSTA-alternate-call DEFINITIONS
+------------------------------------------------------------------------------
+
+answerCall OPERATION
+    ARGUMENT  AnswerCallArgument
+    RESULT    AnswerCallResult
+    ERRORS    {universalFailure}
+::= 2
+
+AnswerCallArgument
+::= CHOICE
+  {
+    callToBeAnswered       ConnectionID,
+    SEQUENCE
+      {
+        callToBeAnswered   ConnectionID,
+        extensions         CSTACommonArguments OPTIONAL
+      }
+  }
+
+AnswerCallResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.3 Call completion
+-- CSTA-call-completion DEFINITIONS
+------------------------------------------------------------------------------
+
+callCompletion OPERATION
+    ARGUMENT        CallCompletionArgument
+    RESULT          CallCompletionResult
+    ERRORS          {universalFailure}
+::= 3
+
+CallCompletionArgument
+::= CHOICE
+  {
+    featureInfo        FeatureInfo,
+    SEQUENCE
+      {
+        featureInfo    FeatureInfo,
+        extensions     CSTACommonArguments OPTIONAL
+      }
+  }
+
+CallCompletionResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.4 Clear call
+-- CSTA-clear-call DEFINITIONS
+------------------------------------------------------------------------------
+
+clearCall OPERATION
+    ARGUMENT    ClearCallArgument
+    RESULT      ClearCallResult
+    ERRORS      {universalFailure}
+::= 4
+
+ClearCallArgument
+::= CHOICE
+  {
+    callToBeCleared        ConnectionID,
+    SEQUENCE
+      {
+        callToBeCleared    ConnectionID,
+        extensions         CSTACommonArguments OPTIONAL
+      }
+  }
+
+ClearCallResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.5 Clear connection
+-- CSTA-clear-connection DEFINITIONS
+------------------------------------------------------------------------------
+
+clearConnection OPERATION
+    ARGUMENT    ClearConnectionArgument
+    RESULT  ClearConnectionResult
+    ERRORS    {universalFailure}
+::= 5
+
+ClearConnectionArgument
+::= CHOICE
+  {
+    connectionToBeCleared      ConnectionID,
+    SEQUENCE
+      {
+        connectionToBeCleared  ConnectionID,
+        extensions             CSTACommonArguments OPTIONAL
+      }
+  }
+
+ClearConnectionResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.6 Conference call
+-- CSTA-conference-call DEFINITIONS
+------------------------------------------------------------------------------
+
+conferenceCall OPERATION
+    ARGUMENT    ConferenceCallArgument
+    RESULT  ConferenceCallResult
+    ERRORS    {universalFailure}
+::= 6
+
+ConferenceCallArgument
+::= CHOICE
+  {
+    callsInvolved      ConnectionDetails,
+    SEQUENCE
+      {
+        callsInvolved  ConnectionDetails,
+        extensions     CSTACommonArguments OPTIONAL
+      }
+  }
+
+ConferenceCallResult
+::= SEQUENCE
+  {
+    conferenceCall     ConnectionID,
+    connections        ConnectionList      OPTIONAL,
+    extensions         CSTAPrivateData     OPTIONAL
+  }
+
+
+------------------------------------------------------------------------------
+-- Chapter 9.7 Consultation call
+-- CSTA-consultation-call DEFINITIONS
+------------------------------------------------------------------------------
+
+consultationCall OPERATION
+    ARGUMENT    ConsultationCallArgument
+    RESULT  ConsultationCallResult
+    ERRORS    {universalFailure}
+::= 7
+
+ConsultationCallArgument
+::= SEQUENCE
+  {
+    existingCall           ConnectionID,
+    calledDirectoryNumber  CalledDeviceID,
+    extensions             CSTACommonArguments OPTIONAL
+  }
+
+ConsultationCallResult
+::= CHOICE
+  {
+    initiatedCall      ConnectionID,
+    SEQUENCE
+      {
+        initiatedCall  ConnectionID,
+        extensions     CSTAPrivateData OPTIONAL
+      }
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.8 Divert call
+-- CSTA-divert-call DEFINITIONS
+------------------------------------------------------------------------------
+
+divertCall OPERATION
+    ARGUMENT    DivertCallArgument
+    RESULT  DivertCallResult
+    ERRORS    {universalFailure}
+::= 8
+
+DivertCallArgument
+::= CHOICE
+  {
+    divertInfo       DivertInfo,
+    SEQUENCE
+      {
+        deivertInfo  DivertInfo,
+        extensions   CSTACommonArguments OPTIONAL
+      }
+  }
+
+DivertCallResult
+::= CHOICE
+  {
+    extensions    CSTAPrivateData,
+    noData        NULL 
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.9 Hold call
+-- CSTA-hold-call DEFINITIONS
+------------------------------------------------------------------------------
+
+holdCall OPERATION
+    ARGUMENT    HoldCallArgument
+    RESULT  HoldCallResult
+    ERRORS    {universalFailure}
+::= 9
+
+HoldCallArgument
+::= SEQUENCE
+  {
+    callToBeHeld            ConnectionID,
+    connectionReservation   ReserveConnection    DEFAULT FALSE,
+    extensions              CSTACommonArguments  OPTIONAL
+  }
+
+HoldCallResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.10 Make call
+-- CSTA-make-call DEFINITIONS
+------------------------------------------------------------------------------
+
+makeCall OPERATION
+    ARGUMENT    MakeCallArgument
+    RESULT  MakeCallResult
+    ERRORS    {universalFailure}
+::= 10
+
+MakeCallArgument
+::= SEQUENCE
+  {
+    callingDevice      DeviceID,
+    calledDirectoryNumber  CalledDeviceID,
+    extensions     CSTACommonArguments     OPTIONAL
+  }
+
+MakeCallResult
+::= CHOICE
+  {
+    initiatedCall      ConnectionID,
+    SEQUENCE
+      {
+        initiatedCall  ConnectionID,
+        extensions CSTAPrivateData OPTIONAL
+      }
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.11 Make predictive call
+-- CSTA-make-predictive-call DEFINITIONS
+------------------------------------------------------------------------------
+
+makePredictiveCall OPERATION
+    ARGUMENT    MakePredictiveCallArgument
+    RESULT  MakePredictiveCallResult
+    ERRORS    {universalFailure}
+::= 11
+
+MakePredictiveCallArgument
+::= SEQUENCE
+  {
+    callingDevice      DeviceID,
+    calledDirectoryNumber  CalledDeviceID,
+    allocation     AllocationState         DEFAULT callDelivered,
+    extensions     CSTACommonArguments     OPTIONAL
+  }
+
+MakePredictiveCallResult
+::= CHOICE
+  {
+    initiatedCall      ConnectionID,
+    SEQUENCE
+      {
+        initiatedCall  ConnectionID,
+        extensions CSTAPrivateData OPTIONAL
+      }
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.12 Query device
+-- CSTA-query-device DEFINITIONS
+------------------------------------------------------------------------------
+
+queryDevice OPERATION
+    ARGUMENT    QueryDeviceArgument
+    RESULT  QueryDeviceResult
+    ERRORS    {universalFailure}
+::= 12
+
+QueryDeviceArgument
+::= SEQUENCE
+  {
+    device     DeviceID,
+    feature        QueryDeviceFeature,
+    extensions CSTACommonArguments OPTIONAL
+  }
+
+QueryDeviceResult
+::= CHOICE
+  {
+    deviceInformation      QueryDeviceInformation,
+    SEQUENCE 
+    {
+      deviceInformation  QueryDeviceInformation,
+      extensions     CSTAPrivateData OPTIONAL
+    }
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.13 Reconnect call
+-- CSTA-reconnect-call DEFINITIONS
+------------------------------------------------------------------------------
+
+reconnectCall OPERATION
+    ARGUMENT    ReconnectCallArgument
+    RESULT  ReconnectCallResult
+    ERRORS    {universalFailure}
+::= 13
+
+ReconnectCallArgument
+::= CHOICE
+  {
+    reconnectInfo      ConnectionDetails,
+    SEQUENCE
+      {
+        reconnectInfo  ConnectionDetails,
+        extensions     CSTACommonArguments OPTIONAL
+      }
+  }
+
+ReconnectCallResult
+::= CHOICE
+  {
+    extensions     CSTAPrivateData,
+    noData         NULL
+  }
+
+
+------------------------------------------------------------------------------
+-- Chapter 9.14 Retrieve call
+-- CSTA-retrieve-call DEFINITIONS
+------------------------------------------------------------------------------
+
+retrieveCall OPERATION
+    ARGUMENT    RetrieveCallArgument
+    RESULT  RetrieveCallResult
+    ERRORS    {universalFailure}
+::= 14
+
+RetrieveCallArgument
+::= CHOICE
+  {
+    callToBeRetrieved      ConnectionID,
+    SEQUENCE
+      {
+        callToBeRetrieved  ConnectionID,
+        extensions     CSTACommonArguments  OPTIONAL
+      }
+  }
+
+RetrieveCallResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.15 Set feature
+-- CSTA-set-feature-call DEFINITIONS
+------------------------------------------------------------------------------
+
+setFeature OPERATION
+    ARGUMENT    SetFeatureArgument
+    RESULT  SetFeatureResult
+    ERRORS    {universalFailure}
+::= 15
+
+SetFeatureArgument
+::= SEQUENCE
+  {
+    device     DeviceID,
+    feature        SetDeviceFeature,
+    extensions CSTACommonArguments OPTIONAL
+  }
+
+SetFeatureResult
+::= CHOICE
+  {
+    extensions    CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 9.16 Transfer call
+-- CSTA-transfer-call DEFINITIONS
+------------------------------------------------------------------------------
+
+transferCall OPERATION
+    ARGUMENT    TransferCallArgument
+    RESULT  TransferCallResult
+    ERRORS    {universalFailure}
+::= 16
+
+TransferCallArgument
+::= CHOICE
+  {
+    transferInfo   ConnectionDetails,
+    SEQUENCE
+      {
+        transferInfo   ConnectionDetails,
+        extensions     CSTACommonArguments OPTIONAL
+      }
+  }
+
+TransferCallResult
+::= SEQUENCE
+  {
+    transferredCall    ConnectionID            OPTIONAL,
+    connections    ConnectionList          OPTIONAL,
+    extensions     CSTAPrivateData OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10 Switching function events
+------------------------------------------------------------------------------
+
+cSTAEventReport OPERATION
+    ARGUMENT    CSTAEventReportArgument
+::= 21
+ 
+EventTypeID
+::= CHOICE
+  {
+    cCSTAform [0] IMPLICIT EventIDType -- value(EVENT)
+  }
+
+CSTAEventReportArgument
+::= SEQUENCE
+  {
+    crossRefIdentifier  MonitorCrossRefID,
+    eventType           EventTypeID,
+    eventInfo           ANY DEFINED BY eventType,
+    extensions          CSTAPrivateData OPTIONAL
+  }
+
+-- macro definition for event report errors
+
+EVENT MACRO ::=
+BEGIN
+    TYPE NOTATION ::= "EVENTINFO" type
+    VALUE NOTATION ::= value( VALUE INTEGER )
+END
+
+------------------------------------------------------------------------------
+-- Chapter 10.1 Call events
+------------------------------------------------------------------------------
+-- Chapter 10.1.1 Call cleared
+------------------------------------------------------------------------------
+
+callCleared EVENT 
+--  EVENTINFO CallClearedEventInfo
+::= 1
+
+CallClearedEventInfo
+::= SEQUENCE
+  {
+    clearedCall        ConnectionID,
+    localConnectionInfo    LocalConnectionState        OPTIONAL,
+    cause          EventCause          OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.2 Conferenced event
+------------------------------------------------------------------------------
+
+conferenced EVENT
+-- EVENTINFO ConferencedEventInfo
+::= 2
+
+ConferencedEventInfo
+::= SEQUENCE
+  {
+    primaryOldCall     ConnectionID,
+    secondaryOldCall   ConnectionID            OPTIONAL,
+    confController     SubjectDeviceID,
+    addedParty     SubjectDeviceID,
+    conferenceConnections  ConnectionList          OPTIONAL,
+    localConnectionInfo    LocalConnectionState        OPTIONAL,
+    cause          EventCause          OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.3 Connection cleared
+------------------------------------------------------------------------------
+
+connectionCleared EVENT
+-- EVENTINFO ConnectionClearedEventInfo
+::= 3
+
+ConnectionClearedEventInfo
+::= SEQUENCE
+  {
+    droppedConnection  ConnectionID,
+    releasingDevice    SubjectDeviceID,
+    localConnectionInfo    LocalConnectionState        OPTIONAL,
+    cause          EventCause          OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.4 Delivered
+------------------------------------------------------------------------------
+
+delivered EVENT
+-- EVENTINFO DeliveredEventInfo
+::= 4
+
+DeliveredEventInfo
+::= SEQUENCE
+  {
+    connection     ConnectionID,
+    alertingDevice     SubjectDeviceID,
+    callingDevice      CallingDeviceID,
+    calledDevice       CalledDeviceID,
+    lastRedirectionDevice  RedirectionDeviceID,
+    localConnectionInfo    LocalConnectionState        OPTIONAL,
+    cause          EventCause          OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.5 Diverted
+------------------------------------------------------------------------------
+
+diverted EVENT
+-- EVENTINFO DivertedEventInfo
+::= 5
+
+DivertedEventInfo
+::= SEQUENCE
+  {
+    connection     ConnectionID        OPTIONAL,
+    divertingDevice        SubjectDeviceID,
+    newDestination     CalledDeviceID,
+    localConnectionInfo    LocalConnectionState    OPTIONAL,
+    cause          EventCause      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.6 Established
+------------------------------------------------------------------------------
+
+established EVENT
+-- EVENTINFO EstablishedEventInfo
+::= 6
+
+EstablishedEventInfo
+::= SEQUENCE    
+  {
+     establishedConnection  ConnectionID,
+     answeringDevice    SubjectDeviceID,
+     callingDevice      CallingDeviceID,
+     calledDevice       CalledDeviceID,
+     lastRedirectionDevice  RedirectionDeviceID,
+     localConnectionInfo    LocalConnectionState    OPTIONAL,
+     cause          EventCause      OPTIONAL
+   }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.7 Failed
+------------------------------------------------------------------------------
+
+failed EVENT
+-- EVENTINFO FailedEventInfo
+::= 7
+
+FailedEventInfo
+::= SEQUENCE
+  {
+    failedConnection   ConnectionID,
+    failingDevice      SubjectDeviceID,
+    calledDevice       CalledDeviceID,
+    localConnectionInfo    LocalConnectionState    OPTIONAL,
+    cause          EventCause      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.8 Held
+------------------------------------------------------------------------------
+
+held EVENT
+-- EVENTINFO HeldEventInfo
+::= 8
+
+HeldEventInfo
+::= SEQUENCE
+  {
+    heldConnection ConnectionID,
+    holdingDevice      SubjectDeviceID,    
+    localConnectionInfo    LocalConnectionState    OPTIONAL,
+    cause          EventCause      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.9 Network reached
+------------------------------------------------------------------------------
+
+networkReached EVENT
+-- EVENTINFO NetworkReachedEventInfo
+::= 9
+
+NetworkReachedEventInfo
+::= SEQUENCE
+  {
+    connection ConnectionID,
+    trunkUsed      SubjectDeviceID,
+    calledDevice       CalledDeviceID,
+    localConnectionInfo    LocalConnectionState    OPTIONAL,
+    cause          EventCause      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.10 Originated
+------------------------------------------------------------------------------
+
+originated EVENT
+-- EVENTINFO OriginatedEventInfo
+::= 10
+
+OriginatedEventInfo
+::= SEQUENCE
+  {
+    originatedConnection   ConnectionID,
+    callingDevice      SubjectDeviceID,
+    calledDevice       CalledDeviceID,
+    localConnectionInfo    LocalConnectionState    OPTIONAL,
+    cause          EventCause      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.11 Queued
+------------------------------------------------------------------------------
+
+queued EVENT
+-- EVENTINFO queuedEventInfo
+::= 11
+
+QueuedEventInfo
+::= SEQUENCE
+  {
+    queuedConnection   ConnectionID,
+    queue          SubjectDeviceID,
+    callingDevice      CallingDeviceID,
+    calledDevice       CalledDeviceID,
+    lastRedirectionDevice  RedirectionDeviceID,
+    numberedQueued  NoOfCallsInQueue    OPTIONAL,
+    localConnectionInfo    LocalConnectionState            OPTIONAL,
+    cause          EventCause              OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.12 Retrieved
+------------------------------------------------------------------------------
+
+retrieved EVENT
+-- EVENTINFO RetrievedEventInfo
+::= 12
+
+RetrievedEventInfo
+::= SEQUENCE
+  {
+    retrievedConnection    ConnectionID,
+    retrievingDevice   SubjectDeviceID,
+    localConnectionInfo    LocalConnectionState    OPTIONAL,
+    cause          EventCause      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.13 Service initiated
+------------------------------------------------------------------------------
+
+serviceInitiated EVENT
+-- EVENTINFO ServiceInitiatedEventInfo
+::= 13
+
+ServiceInitiatedEventInfo
+::= SEQUENCE
+  {
+    initiatedConnection    ConnectionID,
+    localConnectionInfo    LocalConnectionState    OPTIONAL,
+    cause          EventCause      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.1.14 Transferred
+------------------------------------------------------------------------------
+
+transferred EVENT
+-- EVENTINFO TransferredEventInfo
+::= 14
+
+TransferredEventInfo
+::= SEQUENCE
+  {
+    primaryOldCall     ConnectionID,
+    secondaryOldCall   ConnectionID        OPTIONAL,
+    transferringDevice SubjectDeviceID,
+    transferredDevice  SubjectDeviceID,
+    transferredConnections ConnectionList      OPTIONAL,
+    localConnectionInfo    LocalConnectionState    OPTIONAL,
+    cause          EventCause      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.2 Feature events
+------------------------------------------------------------------------------
+-- Chapter 10.2.1 Call information
+------------------------------------------------------------------------------
+
+callInformation EVENT
+-- EVENTINFO CallInformationEventInfo
+::= 101
+
+CallInformationEventInfo
+::= SEQUENCE
+  {
+    connection     ConnectionID,
+    device         SubjectDeviceID,
+    accountInfo        [10] IMPLICIT    AccountInfo OPTIONAL,
+    authorisationCode  [11] IMPLICIT    AuthCode    OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.2.2 Do not disturb
+------------------------------------------------------------------------------
+
+doNotDisturb EVENT
+-- EVENTINFO DoNotDisturbEventInfo
+::= 102
+
+DoNotDisturbEventInfo
+::= SEQUENCE
+  {
+    device         SubjectDeviceID,
+    doNotDisturbOn BOOLEAN
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.2.3 Forwarding
+------------------------------------------------------------------------------
+
+forwarding EVENT
+-- EVENTINFO ForwardingEventInfo
+::= 103
+
+ForwardingEventInfo
+::= SEQUENCE
+  {
+    device         SubjectDeviceID,
+    forwardingInformation  ForwardParameter,
+    forwardedTo        SubjectDeviceID     OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.2.4 Message Waiting
+------------------------------------------------------------------------------
+
+messageWaiting EVENT
+-- EVENTINFO MessageWaitingEventInfo
+::= 104
+
+MessageWaitingEventInfo
+::= SEQUENCE
+  {
+    deviceForMessage   CalledDeviceID,
+    invokingDevice     SubjectDeviceID,
+    messageWaitingOn   BOOLEAN
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.3 Agent state events
+------------------------------------------------------------------------------
+-- Chapter 10.3.1 Logged on
+------------------------------------------------------------------------------
+
+loggedOn EVENT
+-- EVENTINFO LoggedOnEventInfo
+::= 201
+
+LoggedOnEventInfo
+::= SEQUENCE
+  {
+    agentDevice                  SubjectDeviceID,
+    agentID      [10] IMPLICIT   AgentID          OPTIONAL,
+    agentGroup                   AgentGroup       OPTIONAL,
+    password     [11] IMPLICIT   AgentPassword    OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.3.2 Logged off
+------------------------------------------------------------------------------
+
+loggedOff EVENT
+-- EVENTINFO LoggedOffEventInfo
+::= 202
+
+LoggedOffEventInfo
+::= SEQUENCE
+  {
+    agentDevice                  SubjectDeviceID,
+    agentID      [10] IMPLICIT   AgentID          OPTIONAL,
+    agentGroup                   AgentGroup       OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.3.3 Not ready
+------------------------------------------------------------------------------
+
+notReady EVENT
+-- EVENTINFO NotReadyEventInfo
+::= 203
+
+NotReadyEventInfo
+::= SEQUENCE
+  {
+    agentDevice                 SubjectDeviceID,
+    agentID      [10] IMPLICIT  AgentID            OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.3.4 Ready
+------------------------------------------------------------------------------
+
+ready EVENT
+-- EVENTINFO ReadyEventInfo
+::= 204
+
+ReadyEventInfo
+::= SEQUENCE
+  {
+    agentDevice                  SubjectDeviceID,
+    agentID      [10] IMPLICIT   AgentID          OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.3.5 Work not ready
+------------------------------------------------------------------------------
+
+workNotReady EVENT
+-- EVENTINFO WorkNotReadyEventInfo
+::= 205
+
+WorkNotReadyEventInfo
+::= SEQUENCE
+  {
+    agentDevice                 SubjectDeviceID,
+    agentID      [10] IMPLICIT  AgentID            OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.3.6 Work ready
+------------------------------------------------------------------------------
+
+workReady EVENT
+-- EVENTINFO WorkReadyEventInfo
+::= 206
+
+WorkReadyEventInfo
+::= SEQUENCE
+  {
+    agentDevice                  SubjectDeviceID,
+    agentID      [10] IMPLICIT   AgentID          OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.4 Maintenance events
+------------------------------------------------------------------------------
+-- Chapter 10.4.1 Back in service
+------------------------------------------------------------------------------
+
+backInService EVENT
+-- EVENTINFO BackInServiceEventInfo
+::= 301
+
+BackInServiceEventInfo
+::= SEQUENCE
+  {
+    device     DeviceID,
+    cause      EventCause  OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.4.2 Out of service
+------------------------------------------------------------------------------
+
+outOfService EVENT
+-- EVENTINFO OutOfServiceEventInfo
+::= 302
+
+OutOfServiceEventInfo
+::= SEQUENCE
+  {
+    device     DeviceID,
+    cause      EventCause  OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 10.5 Private events
+------------------------------------------------------------------------------
+
+privateEvt EVENT
+-- EVENTINFO PrivateEventInfo
+::= 401
+
+PrivateEventInfo
+::= NULL   --  The actual encoding of the private event is added here,
+           --  replacing NULL with another valid ASN.1 type.
+
+------------------------------------------------------------------------------
+-- Chapter 11 Computing function services
+------------------------------------------------------------------------------
+-- Chapter 11.1 Route request
+-- CSTA-route-request DEFINITIONS
+------------------------------------------------------------------------------
+
+routeRequest OPERATION
+    ARGUMENT    RouteRequestArgument
+    ERRORS    {universalFailure}
+::= 31
+
+RouteRequestArgument
+::= SEQUENCE
+  {
+    crossRefIdentifier RoutingCrossRefID,
+    currentRoute       CalledDeviceID,
+    callingDevice      CallingDeviceID     OPTIONAL,
+    routedCall     ConnectionID            OPTIONAL,
+    routeSelAlgorithm  SelectValue         OPTIONAL,
+    priority           PriorityValue           OPTIONAL,
+    setupInformation SetUpValues           OPTIONAL,
+    extensions     CSTACommonArguments OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 11.2 Re-route request
+-- CSTA-re-route-request DEFINITIONS
+------------------------------------------------------------------------------
+
+reRouteRequest OPERATION
+    ARGUMENT    ReRouteRequestArgument
+    ERRORS    {universalFailure}
+::= 32
+-- 
+ReRouteRequestArgument
+::= SEQUENCE
+  {
+    crossRefIdentifier RoutingCrossRefID,
+    extensions         CSTACommonArguments OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 11.3 Route select request
+-- CSTA-route-select-request DEFINITIONS
+------------------------------------------------------------------------------
+
+routeSelectRequest OPERATION
+    ARGUMENT    RouteSelectRequestArgument
+    ERRORS    {universalFailure}
+::= 33
+-- 
+RouteSelectRequestArgument
+::= SEQUENCE
+  {
+    crossRefIdentifier RoutingCrossRefID,
+    routeSelected      CalledDeviceID,
+    remainRetry        RetryValue          OPTIONAL,
+    setupInformation   SetUpValues        OPTIONAL,
+    routeUsedReq       RouteUsedFlag           OPTIONAL,
+    extensions         CSTACommonArguments OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 11.4 Route used request
+-- CSTA-route-used-request DEFINITIONS
+------------------------------------------------------------------------------
+
+routeUsedRequest OPERATION
+    ARGUMENT    RouteUsedRequestArgument
+    ERRORS    {universalFailure}
+::= 34
+-- 
+RouteUsedRequestArgument
+::= SEQUENCE
+  {
+    crossRefIdentifier RoutingCrossRefID,
+    routeUsed      CalledDeviceID,
+    callingDevice      CallingDeviceID         OPTIONAL,
+    domain         DomainValue         OPTIONAL,
+    extensions     CSTACommonArguments OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 11.5 Route end request
+-- CSTA-route-end-request DEFINITIONS
+------------------------------------------------------------------------------
+
+routeEndRequest OPERATION
+    ARGUMENT    RouteEndRequestArgument
+    ERRORS    {universalFailure}
+::= 35
+-- 
+RouteEndRequestArgument
+::= SEQUENCE
+  {
+    crossRefIdentifier RoutingCrossRefID,
+    errorValue     UniversalFailure        OPTIONAL,
+    extensions         CSTACommonArguments OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 12 Bidirectional services
+------------------------------------------------------------------------------
+-- Chapter 12.1 Escape service
+-- CSTA-escape-service DEFINITIONS
+------------------------------------------------------------------------------
+    
+escapeService OPERATION
+    ARGUMENT    EscapeServiceArgument
+    RESULT  EscapeServiceResult
+    ERRORS    {universalFailure}
+::=  51
+
+EscapeServiceArgument
+::= CSTACommonArguments
+
+EscapeServiceResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 12.2 System status
+-- CSTA-system-status DEFINITIONS
+------------------------------------------------------------------------------
+
+systemStatus OPERATION
+    ARGUMENT    SystemStatusArgument
+    RESULT  SystemStatusResult
+    ERRORS    {universalFailure}
+::= 52
+
+SystemStatusArgument
+::= CHOICE
+  {
+    systemStatus       SystemStatus,
+    SEQUENCE
+      {
+        systemStatus   SystemStatus,
+        extensions CSTACommonArguments OPTIONAL
+      }
+  }
+
+SystemStatusResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 13 Status reporting services
+------------------------------------------------------------------------------
+-- Chapter 13.1 Monitor start
+-- CSTA-monitor-start DEFINITIONS
+------------------------------------------------------------------------------
+
+monitorStart OPERATION
+    ARGUMENT    MonitorStartArgument
+    RESULT  MonitorStartResult
+    ERRORS    {universalFailure}
+::= 71
+
+MonitorStartArgument
+::= SEQUENCE
+  {
+    monitorObject      MonitorObject,
+    monitorFilter      MonitorFilter        OPTIONAL,
+    monitorType        MonitorType          OPTIONAL,
+    extensions         CSTACommonArguments  OPTIONAL
+  }
+
+MonitorStartResult
+::= SEQUENCE
+  {
+    crossRefIdentifier MonitorCrossRefID,
+    monitorFilter      MonitorFilter        OPTIONAL,
+    extensions         CSTAPrivateData      OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 13.2 Change monitor filter
+-- CSTA-change-monitor-filter DEFINITIONS
+------------------------------------------------------------------------------
+
+changeMonitorFilter OPERATION
+    ARGUMENT    ChangeMonitorFilterArgument
+    RESULT  ChangeMonitorFilterResult
+    ERRORS    {universalFailure}
+::= 72
+
+ChangeMonitorFilterArgument
+::= SEQUENCE
+  {
+    monitorCrossRefID  MonitorCrossRefID,
+    filterlist         MonitorFilter,
+    extensions     CSTACommonArguments OPTIONAL
+  }
+
+
+ChangeMonitorFilterResult
+::= CHOICE
+  {
+    filterList     [0] IMPLICIT    MonitorFilter,
+    SEQUENCE
+      {
+        filterList MonitorFilter    OPTIONAL,
+        extensions CSTAPrivateData  OPTIONAL
+      }
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 13.3 Monitor stop
+-- CSTA-monitor-stop DEFINITIONS
+------------------------------------------------------------------------------
+
+monitorStop OPERATION
+    ARGUMENT    MonitorStopArgument
+    RESULT  MonitorStopResult
+    ERRORS    {universalFailure}
+::= 73
+
+MonitorStopArgument
+::= CHOICE
+  {
+    crossRefIdentifier MonitorCrossRefID,
+    SEQUENCE
+      {
+        crossRefIdentifier MonitorCrossRefID,
+        extensions     CSTACommonArguments  OPTIONAL
+      }
+  }
+
+MonitorStopResult
+::= CHOICE
+  {
+    extensions CSTAPrivateData,
+    noData     NULL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 13.4 Snapshot device
+-- CSTA-snapshot-device DEFINITIONS
+------------------------------------------------------------------------------
+
+snapshotDevice OPERATION
+    ARGUMENT    SnapshotDeviceArgument
+    RESULT  SnapshotDeviceResult
+    ERRORS    {universalFailure}
+::= 74
+
+SnapshotDeviceArgument 
+::= CHOICE
+  {
+    snapshotObject     DeviceID,
+    SEQUENCE
+      {
+        snapshotObject DeviceID,
+        extensions     CSTACommonArguments     OPTIONAL
+      }
+  }
+
+SnapshotDeviceResult
+::= CHOICE
+  {
+    snapshotData           SnapshotDeviceData,
+    SEQUENCE
+      {
+        snapshotData       SnapshotDeviceData,
+        extensions         CSTAPrivateData     OPTIONAL
+      }
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 13.5 Snapshot call
+-- CSTA-snapshot-call DEFINITIONS
+------------------------------------------------------------------------------
+
+snapshotCall OPERATION
+    ARGUMENT    SnapshotCallArgument
+    RESULT  SnapshotCallResult
+    ERRORS    {universalFailure}
+::= 75
+
+SnapshotCallArgument
+::= CHOICE
+  {
+    snapshotObject     ConnectionID,
+    SEQUENCE
+      {
+        snapshotObject ConnectionID,   
+        extensions         CSTACommonArguments OPTIONAL
+      }
+  }
+
+SnapshotCallResult
+::= CHOICE
+  {
+    snapshotData           SnapshotCallData,
+    SEQUENCE
+      {
+        snapshotData       SnapshotCallData,
+        extensions         CSTAPrivateData   OPTIONAL
+      }
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 14 Switching function errors
+-- CSTA-error-definition DEFINITIONS
+------------------------------------------------------------------------------
+
+universalFailure ERROR
+    PARAMETER UniversalFailure
+::= 1
+
+UniversalFailure
+::= CHOICE
+  {
+    operationalErrors       [1] IMPLICIT Operations,
+    stateErrors             [2] IMPLICIT StateIncompatibility,
+    systemResourceErrors    [3] IMPLICIT SystemResourceAvailability,
+    subscribedResourceAvailabilityErrors 
+                            [4] IMPLICIT SubscribedResourceAvailability,
+    performanceErrors       [5] IMPLICIT PerformanceManagement,
+    securityErrors          [6] IMPLICIT SecurityError,
+    unspecifiedErrors       [7] IMPLICIT NULL,
+    nonStandardErrors       CSTAPrivateData
+  }
+
+Operations
+::= ENUMERATED
+  {
+    generic                             (1),
+    requestIncompatibleWithObject       (2),
+    valueOutOfRange                     (3),
+    objectNotKnown                      (4), 
+    invalidCallingDevice                (5),
+    invalidCalledDevice                 (6),
+    invalidForwardingDestination        (7),
+    privilegeViolationOnSpecifiedDevice (8),
+    privilegeViolationOnCalledDevice    (9),
+    privilegeViolationOnCallingDevice   (10),
+    invalidCSTACallIdentifier           (11),
+    invalidCSTADeviceIdentifier         (12),
+    invalidCSTAConnectionIdentifier     (13),
+    invalidDestination                  (14),
+    invalidFeature                      (15),
+    invalidAllocationState              (16),
+    invalidCrossRefID                   (17),
+    invalidObjectType                   (18),
+    securityViolation                   (19)
+  }
+
+StateIncompatibility
+::= ENUMERATED
+  {
+    generic                     (1),
+    invalidObjectState          (2),
+    invalidConnectionID         (3),
+    noActiveCall                (4),
+    noHeldCall                  (5),
+    noCallToClear               (6),
+    noConnectionToClear         (7),
+    noCallToAnswer              (8),
+    noCallToComplete            (9)
+  }
+
+SystemResourceAvailability
+::= ENUMERATED
+  {
+    generic                         (1),
+    serviceBusy                     (2),
+    resourceBusy                    (3),
+    resourceOutOfService            (4),
+    networkBusy                     (5),
+    networkOutOfService             (6),
+    overallMonitorLimitExceeded     (7),
+    conferenceMemberLimitExceeded   (8)
+  }
+
+SubscribedResourceAvailability
+::= ENUMERATED
+  {
+    generic                         (1),
+    objectMonitorLimitExceeded      (2),
+    externalTrunkLimitExceeded      (3),
+    outstandingRequestLimitExceeded (4)
+  }
+
+PerformanceManagement
+::= ENUMERATED
+  {
+    generic                         (1),
+    performanceLimitExceeded        (2)
+  }
+
+SecurityError
+::= ENUMERATED 
+  {
+    unspecified                     (0),
+    sequenceNumberViolated          (1),
+    timeStampViolated               (2),
+    pACViolated                     (3),
+    sealViolated                    (4)
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 15 Switching event cause values
+-- CSTA-event-causes DEFINITIONS
+------------------------------------------------------------------------------
+
+EventCause
+::= ENUMERATED
+  {
+    activeMonitor                (1),
+    alternate                    (2),
+    busy                         (3),
+    callBack                     (4),
+    callCancelled                (5),
+    callForwardAlways            (6),
+    callForwardBusy              (7),
+    callForwardNoAnswer          (8),
+    callForward                  (9),
+    callNotAnswered             (10),
+    callPickup                  (11),
+    campOn                      (12),
+    destNotObtainable           (13),
+    doNotDisturb                (14),
+    incompatibleDestination     (15),
+    invalidAccountCode          (16),
+    keyConference                (17),
+    lockout                     (18),
+    maintenance                 (19),
+    networkCongestion           (20),
+    networkNotObtainable        (21),
+    newCall                     (22),
+    noAvailableAgents           (23),
+    override                    (24),
+    park                        (25),
+    overflow                    (26),
+    recall                      (27),
+    redirected                  (28),
+    reorderTone                 (29),
+    resourcesNotAvailable       (30),
+    silentParticipation         (31),
+    transfer                    (32),
+    trunksBusy                  (33),
+    voiceUnitInitiator          (34)
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 16 CSTA data types
+------------------------------------------------------------------------------
+
+-- Application tags used are:
+--    1-5   : Device identifiers
+--    11-14 : Connection identifiers and local connection states
+--    21-24 : Status reporting
+--    29    : CSTAPrivateData
+--    30    : CSTACommonArguments
+
+------------------------------------------------------------------------------
+-- Chapter 16.1 Switching function objects
+-- CSTA-switching-function-objects DEFINITIONS
+------------------------------------------------------------------------------
+
+CSTAObject
+::= CHOICE
+  {
+    deviceObject   DeviceID,
+    callObject     ConnectionID
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 16.2 Device identifiers
+-- CSTA-device-identifiers DEFINITIONS
+------------------------------------------------------------------------------
+
+DeviceID
+::= CHOICE
+  {
+    dialingNumber       [0] IMPLICIT        NumberDigits,
+    deviceNumber        [1] IMPLICIT        DeviceNumber
+  }
+
+NumberDigits
+::= IA5String
+
+DeviceNumber
+::= INTEGER
+
+ExtendedDeviceID
+::= CHOICE
+  {
+    -- deviceIdentifier                 DeviceID,
+    dialingNumber        [0] IMPLICIT   NumberDigits,
+    deviceNumber         [1] IMPLICIT   DeviceNumber,
+    --
+    implicitPublic       [2] IMPLICIT   NumberDigits,
+    explicitPublic       [3]            PublicTON,
+    implicitPrivate      [4] IMPLICIT   NumberDigits,
+    explicitPrivate      [5]            PrivateTON,
+    other                [6] IMPLICIT   OtherPlan
+  }
+
+CallingDeviceID
+::= [APPLICATION 1] CHOICE
+  {
+    deviceIdentifier                    ExtendedDeviceID,
+    notKnown             [7] IMPLICIT   NULL,
+    notRequired          [8] IMPLICIT   NULL
+  }
+
+CalledDeviceID
+::= [APPLICATION 2] CHOICE
+  {
+    deviceIdentifier                    ExtendedDeviceID,
+    notKnown             [7] IMPLICIT   NULL,
+    notRequired          [8] IMPLICIT   NULL
+  }
+
+SubjectDeviceID
+::= [APPLICATION 3] CHOICE
+  {
+    deviceIdentifier                    ExtendedDeviceID,
+    notKnown             [7] IMPLICIT   NULL,
+    notRequired          [8] IMPLICIT   NULL
+  }
+
+RedirectionDeviceID
+::= [APPLICATION 4] CHOICE
+  {
+    numberDialed                        DeviceID,
+    notKnown             [7] IMPLICIT   NULL,
+    notRequired          [8] IMPLICIT   NULL
+  }
+
+PublicTON -- Public Type of Numbers ITU-T E.164
+::= CHOICE
+  {
+    unknown              [0] IMPLICIT   IA5String,
+    international        [1] IMPLICIT   IA5String,
+    national             [2] IMPLICIT   IA5String,
+    networkspecific      [3] IMPLICIT   IA5String,
+    subscriber           [4] IMPLICIT   IA5String,
+    abbreviated          [5] IMPLICIT   IA5String
+  }
+
+PrivateTON -- Private Type of Numbers ECMA-155
+::= CHOICE
+  {
+    unknown              [0] IMPLICIT   IA5String,
+    level3RegionalNumber [1] IMPLICIT   IA5String,
+    level2RegionalNumber [2] IMPLICIT   IA5String,
+    level1RegionalNumber [3] IMPLICIT   IA5String,
+    pTNSpecificNumber    [4] IMPLICIT   IA5String,
+    localNumber          [5] IMPLICIT   IA5String,
+    abbreviated          [6] IMPLICIT   IA5String
+  }
+
+OtherPlan
+::= OCTET STRING
+
+------------------------------------------------------------------------------
+-- Chapter 16.3 Call and connection identifiers
+-- CSTA-call-connection-identifiers DEFINITIONS
+------------------------------------------------------------------------------
+
+ConnectionID
+::= [APPLICATION 11] IMPLICIT SEQUENCE
+  {
+    call                [2] IMPLICIT OCTET STRING OPTIONAL,
+    device CHOICE
+      {
+        staticID        DeviceID,
+        dynamicID       [3] IMPLICIT OCTET STRING
+      } OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 16.4 Connection states
+-- CSTA-connection-states DEFINITIONS
+------------------------------------------------------------------------------
+
+ConnectionIDList
+::= [APPLICATION 12] IMPLICIT SEQUENCE OF ConnectionID
+
+CallInfo
+::= [APPLICATION 13] IMPLICIT SEQUENCE OF SEQUENCE
+  {
+    endpoint            ConnectionID,
+    staticEndpoint      DeviceID OPTIONAL
+  }
+
+ConnectionList
+::= CHOICE
+  {
+    connections         ConnectionIDList,
+    callinformation     CallInfo
+  }
+
+LocalConnectionState
+::= [APPLICATION 14] IMPLICIT ENUMERATED
+  {
+    null        (0),
+    initiated   (1),
+    alerting    (2),
+    connected   (3),
+    hold        (4),
+    queued      (5),
+    fail        (6)
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 16.5 Status reporting
+-- CSTA-status-reporting DEFINITIONS
+------------------------------------------------------------------------------
+
+MonitorObject
+::= CSTAObject
+
+MonitorCrossRefID
+::= [APPLICATION 21] IMPLICIT OCTET STRING
+
+MonitorFilter
+::= SEQUENCE
+  {
+    call        [0] IMPLICIT CallFilter         DEFAULT   {},
+    feature     [1] IMPLICIT FeatureFilter      DEFAULT   {},
+    agent       [2] IMPLICIT AgentFilter        DEFAULT   {},
+    maintenance [3] IMPLICIT MaintenanceFilter  DEFAULT   {},
+    private     [4] IMPLICIT BOOLEAN            DEFAULT FALSE
+  }
+
+CallFilter
+::= BIT STRING
+  {
+    callCleared         (0),
+    conferenced         (1),
+    connectionCleared   (2),
+    delivered           (3),
+    diverted            (4),
+    established         (5),
+    failed              (6),
+    held                (7),
+    networkReached      (8),
+    originated          (9),
+    queued              (10),
+    retrieved           (11),
+    serviceInitiated    (12),
+    transferred         (13)
+  }
+
+FeatureFilter
+::= BIT STRING
+  {
+    callInformation     (0),
+    doNotDisturb        (1),
+    forwarding          (2),
+    messageWaiting      (3)
+  }
+
+AgentFilter
+::= BIT STRING
+  {
+    loggedOn            (0),
+    loggedOff           (1),
+    notReady            (2),
+    ready               (3),
+    workNotReady        (4),
+    workReady           (5)
+  }
+
+MaintenanceFilter
+::= BIT STRING
+  {
+    backInService       (0),
+    outOfService        (1)
+  }
+
+MonitorType
+::= ENUMERATED
+  {
+    call                (0),
+    device              (1)
+  }
+
+SnapshotDeviceData
+::= [APPLICATION 22] IMPLICIT
+    SEQUENCE OF SnapshotDeviceResponseInfo
+
+SnapshotDeviceResponseInfo
+::= SEQUENCE
+  {
+    callIdentifier      ConnectionID,
+    localCallState      CallState
+  }
+
+SnapshotCallData
+::= [APPLICATION 23] IMPLICIT
+    SEQUENCE OF SnapshotCallResponseInfo
+
+SnapshotCallResponseInfo
+::= SEQUENCE
+  {
+    deviceOnCall        SubjectDeviceID,
+    callIdentifier      ConnectionID,
+    localConnectionState    LocalConnectionState    OPTIONAL
+  }
+
+CallState
+::= CHOICE
+  {
+    compound    [0] IMPLICIT CompoundCallState,
+    simple      [1] IMPLICIT SimpleCallState,
+    unknown     [2] IMPLICIT NULL
+  }
+
+CompoundCallState
+::= SEQUENCE OF LocalConnectionState
+
+SimpleCallState
+::= ENUMERATED
+  {
+    callNull                (0),    -- '00'H    - null-null
+    callPending             (1),    -- '01'H    - null-initiate
+    callOriginated          (3),    -- '03'H    - null-connect
+    callDelivered           (35),   -- '23'H    - alerting-connect
+    callDeliveredHeld       (36),   -- '24'H    - alerting-held
+    callReceived            (50),   -- '32'H    - connect-alerting
+    callEstablished         (51),   -- '33'H    - connect-connect
+    callEstablishedHeld     (52),   -- '34'H    - connected-held
+    callReceivedOnHold      (66),   -- '42'H    - held-alerting
+    callEstablishedOnHold   (67),   -- '43'H    - held-connect
+    callQueued              (83),   -- '53'H    - queued-connect
+    callQueuedHeld          (84),   -- '54'H    - queued-held
+    callFailed              (99),   -- '63'H    - failed-connect
+    callFailedHeld          (100)   -- '64'H    - failed-held
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 16.6 Device and feature types and other parameters
+-- CSTA-device-feature-types DEFINITIONS
+------------------------------------------------------------------------------
+
+AccountInfo
+::= OCTET STRING
+
+AgentID
+::= OCTET STRING
+
+AgentGroup
+::= DeviceID
+
+AgentPassword
+::= OCTET STRING
+
+AgentParameter
+::= CHOICE
+  {
+    loggedIn           [0] IMPLICIT LoggedOnInfo,
+    loggedOut          [1] IMPLICIT LoggedOffInfo,
+    notReady           [2] IMPLICIT NULL,
+    ready              [3] IMPLICIT NULL,
+    workNotReady       [4] IMPLICIT NULL,
+    workReady          [5] IMPLICIT NULL
+  }
+
+AgentState
+::= ENUMERATED
+  {
+    notReady           (0),
+    null               (1),
+    ready              (2),
+    workNotReady       (3),
+    workReady          (4)
+  }
+
+AllocationState
+::= ENUMERATED
+  {
+    callDelivered           (0),
+    callEstablished         (1)
+  }
+
+AuthCode
+::= OCTET STRING
+
+ConnectionDetails
+::= CHOICE
+  {
+    heldCall            [0] IMPLICIT ConnectionID,
+    activeCall          [1] IMPLICIT ConnectionID,
+    bothCalls           [2] IMPLICIT SEQUENCE 
+      {
+        heldCall    ConnectionID,
+        activeCall  ConnectionID
+      }
+  }
+
+DeviceClass
+::= BIT STRING
+  {
+    voice   (0),
+    data    (1),
+    image   (2),
+    other   (3)
+  }
+
+DeviceInfo
+::= SEQUENCE
+  {
+    deviceID    DeviceID    OPTIONAL,
+    deviceType  DeviceType  OPTIONAL,
+    deviceClass DeviceClass OPTIONAL
+  }
+
+DeviceType
+::= ENUMERATED
+  {
+    station              (0),
+    line                 (1),
+    button               (2),
+    aCD                  (3),
+    trunk                (4),
+    operator             (5),
+    station-group       (16),
+    line-group          (17),
+    button-group        (18),
+    aCD-group           (19),
+    trunk-group         (20),
+    operator-group      (21),
+    other              (255)
+  }
+
+DivertInfo
+::= CHOICE
+  {
+    deflect [0] IMPLICIT SEQUENCE
+      {
+        callToBeDiverted    ConnectionID,
+        newDestination      CalledDeviceID
+      },
+    pickup  [1] IMPLICIT SEQUENCE
+      {
+        callToBePickedUp    ConnectionID,
+        requestingDevice    DeviceID
+      },
+    group   [2] DeviceID
+  }
+
+FeatureInfo
+::= CHOICE
+  {
+    campon          [0] IMPLICIT    ConnectionID,
+    callback        [1] IMPLICIT    ConnectionID,
+    intrude         [2] IMPLICIT    ConnectionID,
+    callbackMessage [3] IMPLICIT    ConnectionID
+  }
+
+ListForwardParameters
+::= SEQUENCE OF SEQUENCE
+  {
+    forwardingType      ForwardingType,
+    forwardDN       NumberDigits
+  }
+
+LoggedOnInfo
+::= SEQUENCE
+  {
+    agentID     [10] IMPLICIT   AgentID         OPTIONAL,
+    password    [11] IMPLICIT   AgentPassword   OPTIONAL,
+    group                       AgentGroup      OPTIONAL
+  }
+
+LoggedOffInfo
+::= SEQUENCE
+  {
+    agentID     [10] IMPLICIT   AgentID         OPTIONAL,
+    group                       AgentGroup      OPTIONAL
+  }
+
+ForwardParameter
+::= SEQUENCE
+  {
+    forwardingType  ForwardingType,
+    forwardDN       NumberDigits OPTIONAL
+  }
+
+ForwardingType
+::= ENUMERATED
+  {
+    forwardImmediateOn   (0),
+    forwardImmediateOff  (1),
+    forwardBusyOn        (2),
+    forwardBusyOff       (3),
+    forwardNoAnsOn       (4),
+    forwardNoAnsOff      (5),
+    forwardBusyIntOn     (6),
+    forwardBusyIntOff    (7),
+    forwardBusyExtOn     (8),
+    forwardBusyExtOff    (9),
+    forwardNoAnsIntOn   (10),
+    forwardNoAnsIntOff  (11),
+    forwardNoAnsExtOn   (12),
+    forwardNoAnsExtOff  (13)
+  }
+
+NoOfCallsInQueue
+::= INTEGER
+
+QueryDeviceFeature   -- used by Query Feature service request
+::= ENUMERATED
+  {
+    msgWaitingOn         (0),
+    doNotDisturbOn       (1),
+    forward              (2),
+    lastDialedNumber     (3),
+    deviceInfo           (4),
+    agentState           (5),
+    routingEnabled       (6),
+    autoAnswer           (7),
+    microphoneMuteOn     (8),
+    speakerMuteOn        (9),
+    speakerVolume       (10)
+  }
+
+QueryDeviceInformation
+::= CHOICE
+  {
+    msgWaitingOn         [0] IMPLICIT BOOLEAN,
+    doNotDisturbOn       [1] IMPLICIT BOOLEAN,
+    forward              [2] IMPLICIT ListForwardParameters,
+    lastDialed           [3] IMPLICIT NumberDigits,
+    deviceInfo           [4] IMPLICIT DeviceInfo,
+    agentState           [5] IMPLICIT AgentState,
+    routingEnabled       [6] IMPLICIT BOOLEAN,
+    autoAnswerOn         [7] IMPLICIT BOOLEAN,
+    microphoneMuteOn     [8] IMPLICIT BOOLEAN,
+    speakerMuteOn        [9] IMPLICIT BOOLEAN,
+    speakerVolume       [10] IMPLICIT INTEGER (0 .. 100)
+  }
+
+ReserveConnection
+::= BOOLEAN
+
+SetDeviceFeature
+::= CHOICE
+  {
+    msgWaitingOn        [0] IMPLICIT BOOLEAN,
+    doNotDisturbOn      [1] IMPLICIT BOOLEAN,
+    forward             [2] IMPLICIT ForwardParameter,
+    requestedAgentState [3] AgentParameter
+  }
+
+SystemStatus
+::= ENUMERATED
+  {
+    initializing        (0),
+    enabled             (1),
+    normal              (2),
+    messagesLost        (3),
+    disabled            (4),
+    overloadImminent    (5),
+    overloadReached     (6),
+    overloadRelieved    (7)
+  }
+
+SelectValue
+::= ENUMERATED
+  {
+    normal              (0),
+    leastCost           (1),
+    emergency           (2),
+    aCD                 (3),    
+    userDefined         (4)
+  }
+
+PriorityValue
+::= BOOLEAN
+
+SetUpValues
+::= OCTET STRING
+
+RetryValue   -- used in RouteSelect Request service
+::= CHOICE
+  {
+    noListAvailable     [0] IMPLICIT BOOLEAN,
+    noCountAvailable    [1] IMPLICIT BOOLEAN,
+    retryCount          [2] IMPLICIT INTEGER
+  }
+
+RouteUsedFlag
+::= BOOLEAN
+
+DomainValue
+::= BOOLEAN
+
+RoutingCrossRefID
+::= [APPLICATION 24] IMPLICIT OCTET STRING
+
+------------------------------------------------------------------------------
+-- Chapter 16.7 Security service
+-- CSTA-security DEFINITIONS
+------------------------------------------------------------------------------
+
+Seal
+::= SEQUENCE
+  {
+    algorithmIdentifier OBJECT IDENTIFIER,
+    keyIdentifier       OCTET STRING,
+    seal                OCTET STRING
+  }
+
+CSTASecurityData
+::= SEQUENCE
+  {
+    messageSequenceNumber   INTEGER OPTIONAL,
+    timeStamp               UTCTime OPTIONAL,
+    -- privilegeAttributeCertificate PrivilegeAttributeCertificate OPTIONAL,
+    seal                    Seal    OPTIONAL
+  }
+
+------------------------------------------------------------------------------
+-- Chapter 16.8 Common extensions
+-- CSTA-extension-types DEFINITIONS
+------------------------------------------------------------------------------
+
+CSTACommonArguments
+::= [APPLICATION 30] IMPLICIT SEQUENCE
+  {
+    security       [0] IMPLICIT    CSTASecurityData                OPTIONAL,
+    privateData    [1] IMPLICIT    SEQUENCE OF CSTAPrivateData     OPTIONAL
+  }
+
+CSTAPrivateData
+::= [APPLICATION 29] IMPLICIT SEQUENCE
+  {
+    manufacturer   OBJECT IDENTIFIER,
+    data           ANY DEFINED BY manufacturer
+  }
+
+------------------------------------------------------------------------------
+-- Patch !!!
+-- Enumerated information for ROSE switch.
+------------------------------------------------------------------------------
+
+OperationIDType
+::= INTEGER
+  {
+    alternateCall         (1),
+    answerCall            (2),
+    callCompletion        (3),
+    clearCall             (4),
+    clearConnection       (5),
+    conferenceCall        (6),
+    consultationCall      (7),
+    divertCall            (8),
+    holdCall              (9),
+    makeCall             (10),
+    makePredictiveCall   (11),
+    queryDevice          (12),
+    reconnectCall        (13),
+    retrieveCall         (14),
+    setFeature           (15),
+    transferCall         (16),
+    cSTAEventReport      (21),
+    routeRequest         (31),
+    reRouteRequest       (32),
+    routeSelectRequest   (33),
+    routeUsedRequest     (34),
+    routeEndRequest      (35),
+    escapeService        (51),
+    systemStatus         (52),
+    monitorStart         (71),
+    changeMonitorFilter  (72),
+    monitorStop          (73),
+    snapshotDevice       (74),
+    snapshotCall         (75) 
+  }
+
+ErrorIDType
+::= INTEGER
+  {
+    universalFailure      (1)
+  }
+
+EventIDType
+::= INTEGER
+  {
+    -- call events:
+    callCleared           (1),
+    conferenced           (2),
+    connectionCleared     (3),
+    delivered             (4),
+    diverted              (5),
+    established           (6),
+    failed                (7),
+    held                  (8),
+    networkReached        (9),
+    originated           (10),
+    queued               (11),
+    retrieved            (12),
+    serviceInitiated     (13),
+    transferred          (14),
+    -- feature events:
+    callInformation     (101),
+    doNotDisturb        (102),
+    forwarding          (103),
+    messageWaiting      (104),
+    -- agent state events:
+    loggedOn            (201),
+    loggedOff           (202),
+    notReady            (203),
+    ready               (204),
+    workNotReady        (205),
+    workReady           (206),
+    -- Maintenance events:
+    backInService       (301),
+    outOfService        (302),
+    -- private events:
+    privateEvt          (401)
+  }
+
+------------------------------------------------------------------------------
+-- Ericsson Escape Service Private Data 'manufacture' object identifiers
+--
+
+escEnterDTMF OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) enterDTMF( 1)
+  }
+
+escCancelCallBack OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) cancelCallback( 2)
+  }
+
+escMessageDiversion OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) messageDiversion( 3)
+  }
+
+escAccountCode OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) accountCode( 4)
+  }
+
+escAuthorizationCode OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) authorizationCode( 5)
+  }
+
+escPressProgrammableKey OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) pressProgrammableKey( 8)
+  }
+
+escAssociateData OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) associateData( 9)
+  }
+
+escForwardACDGroup OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) forwardACDGroup( 12)
+  }
+
+escQueryMsgDiversionStrings OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) queryMsgDiversionStrings( 14)
+  }
+
+escQueryFeatureAndResponse OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) queryFeatureAndResponse( 15)
+  }
+
+escSetFeatureAndResponse OBJECT IDENTIFIER
+::=
+  {
+    iso( 1) identified-organization( 3) icd-ecma( 12) member-company( 2)
+    ericsson( 1213) applicationLink( 21) setFeatureAndResposnse( 16)
+  }
+
+---------------------------------------------------------------------------
+
+END -- of CSTA
